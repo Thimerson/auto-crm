@@ -4,6 +4,15 @@ import { contacts, deals, activities, pipelineStages } from "@/db/schema";
 import { eq, asc, isNull } from "drizzle-orm";
 import { formatCurrency } from "@/lib/constants";
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export async function POST() {
   const apiKey = process.env.RESEND_API_KEY;
   const email = process.env.DIGEST_EMAIL;
@@ -71,7 +80,7 @@ export async function POST() {
         <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
           <h2 style="color: #dc2626; font-size: 16px; margin: 0 0 8px;">Seguimientos vencidos (${overdue.length})</h2>
           <ul style="margin: 0; padding-left: 20px; color: #991b1b;">
-            ${overdue.map((a) => `<li>${a.description} — ${a.contactName || "Sin contacto"}</li>`).join("")}
+            ${overdue.map((a) => `<li>${escapeHtml(a.description)} — ${escapeHtml(a.contactName || "Sin contacto")}</li>`).join("")}
           </ul>
         </div>
       ` : ""}
@@ -94,7 +103,7 @@ export async function POST() {
       ${hotLeads.length > 0 ? `
         <h3 style="color: #1e293b; font-size: 14px;">Leads calientes (${hotLeads.length})</h3>
         <ul style="color: #334155; font-size: 14px; padding-left: 20px;">
-          ${hotLeads.map((c) => `<li>${c.name}${c.company ? ` — ${c.company}` : ""}</li>`).join("")}
+          ${hotLeads.map((c) => `<li>${escapeHtml(c.name)}${c.company ? ` — ${escapeHtml(c.company)}` : ""}</li>`).join("")}
         </ul>
       ` : ""}
 
