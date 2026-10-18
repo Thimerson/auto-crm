@@ -1,17 +1,9 @@
+import { escapeHtml } from "@/lib/html";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { contacts, deals, activities, pipelineStages } from "@/db/schema";
 import { eq, asc, isNull } from "drizzle-orm";
 import { formatCurrency } from "@/lib/constants";
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
 
 export async function POST() {
   const apiKey = process.env.RESEND_API_KEY;
