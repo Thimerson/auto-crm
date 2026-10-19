@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { contacts, activities, crmSettings } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { checkSecret } from "@/lib/auth";
 
 // Field name mapping: common variations → standard field
 const FIELD_MAP: Record<string, string> = {
@@ -76,21 +77,29 @@ function extractFields(
 }
 
 export async function POST(request: NextRequest) {
-  // Auth check: if a webhook secret is stored, require it in the header
+  // Auth check: el secret es obligatorio. Se toma de WEBHOOK_SECRET o de crm_settings.webhook_secret
   const stored = db
     .select()
     .from(crmSettings)
     .where(eq(crmSettings.key, "webhook_secret"))
     .get();
 
-  if (stored) {
-    const secretHeader = request.headers.get("x-webhook-secret");
-    if (!secretHeader || secretHeader !== stored.value) {
-      return NextResponse.json(
-        { error: "Secret invalido o faltante" },
-        { status: 401 }
-      );
-    }
+  const check = checkSecret({
+    provided: request.headers.get("x-webhook-secret"),
+    expected: process.env.WEBHOOK_SECRET || stored?.value,
+  });
+
+  if (check === "not_configured") {
+    return NextResponse.json(
+      { error: "Webhook sin secret configurado. Define WEBHOOK_SECRET en .env.local" },
+      { status: 503 }
+    );
+  }
+  if (check === "invalid") {
+    return NextResponse.json(
+      { error: "Secret invalido o faltante" },
+      { status: 401 }
+    );
   }
 
   let payload: Record<string, unknown>;

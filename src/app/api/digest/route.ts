@@ -1,11 +1,30 @@
 import { escapeHtml } from "@/lib/html";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { checkSecret } from "@/lib/auth";
 import { db } from "@/db";
 import { contacts, deals, activities, pipelineStages } from "@/db/schema";
 import { eq, asc, isNull } from "drizzle-orm";
 import { formatCurrency } from "@/lib/constants";
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const check = checkSecret({
+    provided: request.headers.get("x-digest-secret"),
+    expected: process.env.DIGEST_SECRET,
+  });
+
+  if (check === "not_configured") {
+    return NextResponse.json(
+      { error: "Digest sin secret configurado. Define DIGEST_SECRET en .env.local" },
+      { status: 503 }
+    );
+  }
+  if (check === "invalid") {
+    return NextResponse.json(
+      { error: "Secret invalido o faltante" },
+      { status: 401 }
+    );
+  }
+
   const apiKey = process.env.RESEND_API_KEY;
   const email = process.env.DIGEST_EMAIL;
 

@@ -6,6 +6,7 @@ Genera y envia un resumen diario del CRM por correo electronico.
 
 - `RESEND_API_KEY` en `.env.local` (obten una gratis en resend.com)
 - `DIGEST_EMAIL` en `.env.local` (email donde recibir el resumen)
+- `DIGEST_SECRET` en `.env.local` (el endpoint responde 503 sin el; enviar en header `x-digest-secret`)
 
 ## Proceso
 
@@ -30,7 +31,7 @@ DIGEST_EMAIL=tu@email.com
 
 Si esta configurado, envia el digest:
 ```bash
-curl -s -X POST http://localhost:3000/api/digest | python3 -m json.tool
+curl -s -X POST -H "x-digest-secret: TU_DIGEST_SECRET" http://localhost:3000/api/digest | python3 -m json.tool
 ```
 
 ### Paso 3: Programar envio automatico (opcional)
@@ -39,7 +40,7 @@ Para recibir el resumen todos los dias a las 8am, el usuario puede:
 
 1. Usar `cron` en su maquina:
 ```bash
-echo "0 8 * * * curl -s -X POST http://localhost:3000/api/digest" | crontab -
+echo "0 8 * * * curl -s -X POST -H 'x-digest-secret: TU_DIGEST_SECRET' http://localhost:3000/api/digest" | crontab -
 ```
 
 2. O pedirle a Claude Code que lo haga con un schedule

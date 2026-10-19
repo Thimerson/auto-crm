@@ -81,9 +81,9 @@ npm run mcp          # Iniciar servidor MCP (para Claude Desktop/Web)
 | `/api/classify` | POST | Clasificar lead (IA o reglas) |
 | `/api/followups` | GET | Follow-ups pendientes (vencidos, hoy, proximos) |
 | `/api/import` | POST | Importacion masiva de contactos |
-| `/api/webhook` | POST | Recibir leads de formularios externos (Typeform, Tally, etc.) |
+| `/api/webhook` | POST | Recibir leads de formularios externos (Typeform, Tally, etc.). Requiere header `x-webhook-secret` (WEBHOOK_SECRET) |
 | `/api/export` | GET | Exportar contactos o deals como CSV (?type=contacts o deals) |
-| `/api/digest` | POST | Enviar resumen diario por email (requiere RESEND_API_KEY) |
+| `/api/digest` | POST | Enviar resumen diario por email (requiere RESEND_API_KEY y header `x-digest-secret` con DIGEST_SECRET) |
 
 ## Configuracion del negocio
 
@@ -152,3 +152,5 @@ Agregar a `~/.claude/claude_desktop_config.json`:
 - `RESEND_API_KEY` — Opcional. Para enviar digest diario por email (resend.com, gratis)
 - `DIGEST_EMAIL` — Opcional. Email donde recibir el digest
 - `DIGEST_FROM` — Opcional. Email remitente del digest (default: onboarding@resend.dev)
+- `WEBHOOK_SECRET` — Obligatorio para `/api/webhook`. Sin el, el endpoint responde 503
+- `DIGEST_SECRET` — Obligatorio para `/api/digest`. Sin el, el endpoint responde 503
