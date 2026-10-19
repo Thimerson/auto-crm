@@ -7,6 +7,7 @@ import { SalesTrendChart } from "@/components/dashboard/SalesTrendChart";
 import { SourceMixChart } from "@/components/dashboard/SourceMixChart";
 import { InsightsPanel } from "@/components/dashboard/InsightsPanel";
 import { QuickActions } from "@/components/dashboard/QuickActions";
+import { HeroBanner } from "@/components/dashboard/HeroBanner";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { NotificationBanner } from "@/components/dashboard/NotificationBanner";
 import { buildDashboard } from "@/lib/dashboard";
@@ -46,15 +47,14 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Resumen de tu pipeline de ventas · mes de referencia {data.referenceMonth}
-          </p>
-        </div>
+      <HeroBanner
+        wonValue={data.kpis.wonValue}
+        pipelineValue={data.kpis.pipelineValue}
+        activeDeals={data.kpis.activeDeals}
+        referenceMonth={data.referenceMonth}
+      >
         <QuickActions />
-      </div>
+      </HeroBanner>
 
       {isFirstRun && (
         <div className="rounded-lg border border-primary/20 bg-primary/5 p-6">
