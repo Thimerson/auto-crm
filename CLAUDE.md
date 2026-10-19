@@ -36,6 +36,7 @@ npm run mcp          # Iniciar servidor MCP (para Claude Desktop/Web)
 | `/analyze-pipeline` | Analisis completo del pipeline con recomendaciones accionables |
 | `/daily-briefing` | Resumen ejecutivo del dia: follow-ups, deals calientes, prioridades |
 | `/import-contacts` | Importar contactos desde un archivo CSV |
+| `/import-amazon` | Importar pedidos de Amazon (reporte CSV) como deals en EUR |
 | `/customize` | Cambiar configuracion sin reiniciar todo |
 | `/connect` | Conectar CRM con Gmail, Calendar, Sheets, WhatsApp via MCP |
 | `/digest` | Enviar resumen diario por email (requiere Resend) |
@@ -80,7 +81,8 @@ npm run mcp          # Iniciar servidor MCP (para Claude Desktop/Web)
 | `/api/pipeline` | GET, PUT | Pipeline completo; mover deals entre etapas |
 | `/api/classify` | POST | Clasificar lead (IA o reglas) |
 | `/api/followups` | GET | Follow-ups pendientes (vencidos, hoy, proximos) |
-| `/api/import` | POST | Importacion masiva de contactos |
+| `/api/import` | POST | Importacion masiva de contactos. Omite duplicados por email o telefono |
+| `/api/import/amazon` | POST | Importar reporte CSV de pedidos de Amazon (text/csv). Cada pedido nuevo crea un deal ganado en EUR |
 | `/api/webhook` | POST | Recibir leads de formularios externos (Typeform, Tally, etc.). Requiere header `x-webhook-secret` (WEBHOOK_SECRET) |
 | `/api/export` | GET | Exportar contactos o deals como CSV (?type=contacts o deals) |
 | `/api/digest` | POST | Enviar resumen diario por email (requiere RESEND_API_KEY y header `x-digest-secret` con DIGEST_SECRET) |
@@ -97,7 +99,7 @@ El archivo en `public/crm-config.json` es la copia por defecto (template).
 - **Idioma UI**: Espanol por defecto. Soporte bilingue con `const t = { en: {...}, es: {...} }`
 - **Max ~300 lineas por componente**. Dividir si crece mas
 - **No emojis como iconos** — usar Lucide React (SVG)
-- **Valores monetarios**: Centavos (integer). Usar `formatCurrency()` para mostrar
+- **Valores monetarios**: Centavos (integer), en EUR. Usar `formatCurrency()` para mostrar (es-ES)
 - **Fechas**: `date-fns` para formateo. SQLite almacena como integer timestamps
 - **Forms**: react-hook-form + zod
 - **Drag & drop**: @dnd-kit (NO react-beautiful-dnd)

@@ -114,7 +114,7 @@ export function DealForm({ open, onClose }: DealFormProps) {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="deal-value">Valor (MXN)</Label>
+              <Label htmlFor="deal-value">Valor (EUR)</Label>
               <Input
                 id="deal-value"
                 type="number"

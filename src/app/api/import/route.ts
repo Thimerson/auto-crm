@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { contacts } from "@/db/schema";
 import { MAX_IMPORT_CONTACTS, normalizeImportContact } from "@/lib/import";
+import { isDuplicate } from "@/lib/dedupe";
 
 export async function POST(request: NextRequest) {
   let body;
@@ -28,11 +29,16 @@ export async function POST(request: NextRequest) {
 
   const results = {
     imported: 0,
+    duplicates: 0,
     failed: 0,
     errors: [] as string[],
   };
 
   const now = new Date();
+  const existing = db
+    .select({ email: contacts.email, phone: contacts.phone })
+    .from(contacts)
+    .all();
 
   for (const raw of contactList) {
     const normalized = normalizeImportContact(raw);
@@ -44,6 +50,11 @@ export async function POST(request: NextRequest) {
 
     const contact = normalized.value;
 
+    if (isDuplicate({ email: contact.email, phone: contact.phone }, existing)) {
+      results.duplicates++;
+      continue;
+    }
+
     try {
       db.insert(contacts)
         .values({
@@ -52,6 +63,7 @@ export async function POST(request: NextRequest) {
           updatedAt: now,
         })
         .run();
+      existing.push({ email: contact.email, phone: contact.phone });
       results.imported++;
     } catch (error) {
       results.failed++;

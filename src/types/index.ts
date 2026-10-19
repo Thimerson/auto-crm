@@ -13,6 +13,7 @@ export type LeadSource =
   | "evento"
   | "import"
   | "webhook"
+  | "amazon"
   | "otro";
 
 export interface Contact {
