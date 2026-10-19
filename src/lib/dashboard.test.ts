@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDashboard, type DashboardInput } from "./dashboard";
+import { buildDashboard, sliceSales, type DashboardInput } from "./dashboard";
 
 const stages = [
   { id: "prospecto", name: "Prospecto", color: "#64748b", order: 1, isWon: false, isLost: false },
@@ -151,5 +151,29 @@ describe("buildDashboard insights", () => {
     expect(insights).toContainEqual(
       expect.objectContaining({ level: "warning", text: expect.stringContaining("1 seguimiento") })
     );
+  });
+});
+
+describe("salesSeries and sliceSales", () => {
+  it("serie completa desde el primer mes ganado hasta el mes de referencia, sin huecos", () => {
+    const { salesSeries } = buildDashboard(input());
+    expect(salesSeries.map((m) => m.month)).toEqual(["2025-10", "2025-11", "2025-12"]);
+    expect(salesSeries[0]).toMatchObject({ won: 20000, count: 1 });
+  });
+
+  it("sliceSales recorta N meses hasta el mes final", () => {
+    const series = [
+      { month: "2025-01", won: 1, count: 1 },
+      { month: "2025-02", won: 2, count: 1 },
+      { month: "2025-03", won: 3, count: 1 },
+      { month: "2025-04", won: 4, count: 1 },
+    ];
+    expect(sliceSales(series, "2025-04", 2).map((m) => m.month)).toEqual(["2025-03", "2025-04"]);
+    expect(sliceSales(series, "2025-03", null).map((m) => m.month)).toEqual(["2025-01", "2025-02", "2025-03"]);
+  });
+
+  it("sliceSales ajusta el mes final si queda fuera del rango", () => {
+    const series = [{ month: "2025-01", won: 1, count: 1 }, { month: "2025-02", won: 2, count: 1 }];
+    expect(sliceSales(series, "2030-01", 6).map((m) => m.month)).toEqual(["2025-01", "2025-02"]);
   });
 });

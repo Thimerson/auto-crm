@@ -59,6 +59,7 @@ export interface DashboardData {
     overdueActivities: number;
   };
   monthlySales: MonthlySales[];
+  salesSeries: MonthlySales[];
   pipeline: PipelineStageSummary[];
   sourceMix: Array<{ source: string; count: number }>;
   insights: Insight[];
@@ -126,6 +127,20 @@ export function buildDashboard(input: DashboardInput): DashboardData {
     monthlySales.push({ month: key, won: entry?.won ?? 0, count: entry?.count ?? 0 });
   }
 
+  // Serie completa desde el primer mes con ventas ganadas hasta el mes de referencia, con meses vacíos en cero.
+  const wonMonthKeys = [...wonByMonth.keys()].sort();
+  const salesSeries: MonthlySales[] = [];
+  if (wonMonthKeys.length > 0) {
+    const [firstYear, firstMonth] = wonMonthKeys[0].split("-").map(Number);
+    const startIndex = firstYear * 12 + (firstMonth - 1);
+    const endIndex = refYear * 12 + refMonth;
+    for (let index = startIndex; index <= endIndex; index++) {
+      const key = monthKey(Math.floor(index / 12), index % 12);
+      const entry = wonByMonth.get(key);
+      salesSeries.push({ month: key, won: entry?.won ?? 0, count: entry?.count ?? 0 });
+    }
+  }
+
   const wonValueThisMonth = wonByMonth.get(refKey)?.won ?? 0;
   const wonValuePrevMonth = wonByMonth.get(prevKey)?.won ?? 0;
   const trendPct =
@@ -176,11 +191,18 @@ export function buildDashboard(input: DashboardInput): DashboardData {
   return {
     kpis,
     monthlySales,
+    salesSeries,
     pipeline,
     sourceMix,
     insights: buildInsights({ kpis, wonDeals, monthlySales, refKey }),
     referenceMonth: refKey,
   };
+}
+
+// Recorta la serie hasta endMonth (inclusive) y deja los últimos `months` meses; months null = todo.
+export function sliceSales(series: MonthlySales[], endMonth: string, months: number | null): MonthlySales[] {
+  const upTo = series.filter((m) => m.month <= endMonth);
+  return months === null ? upTo : upTo.slice(-months);
 }
 
 function buildInsights(args: {

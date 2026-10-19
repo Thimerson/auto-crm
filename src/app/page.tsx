@@ -89,7 +89,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <SalesTrendChart data={data.monthlySales} />
+          <SalesTrendChart series={data.salesSeries} referenceMonth={data.referenceMonth} />
         </div>
         <InsightsPanel insights={data.insights} />
       </div>
