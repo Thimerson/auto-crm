@@ -1,55 +1,32 @@
 import { db } from "@/db";
 import { contacts, deals, activities, pipelineStages } from "@/db/schema";
-import { eq, asc, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { KPICards } from "@/components/dashboard/KPICards";
 import { PipelineChart } from "@/components/dashboard/PipelineChart";
+import { SalesTrendChart } from "@/components/dashboard/SalesTrendChart";
+import { SourceMixChart } from "@/components/dashboard/SourceMixChart";
+import { InsightsPanel } from "@/components/dashboard/InsightsPanel";
+import { QuickActions } from "@/components/dashboard/QuickActions";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { NotificationBanner } from "@/components/dashboard/NotificationBanner";
-import type { DashboardStats } from "@/types";
+import { buildDashboard } from "@/lib/dashboard";
 
 export const dynamic = "force-dynamic";
 
 export default function DashboardPage() {
-  const allContacts = db.select().from(contacts).all();
-  const allDeals = db.select().from(deals).all();
-  const stages = db
-    .select()
-    .from(pipelineStages)
-    .orderBy(asc(pipelineStages.order))
-    .all();
-
-  const activeDeals = allDeals.filter((d) => {
-    const stage = stages.find((s) => s.id === d.stageId);
-    return stage && !stage.isWon && !stage.isLost;
+  const data = buildDashboard({
+    stages: db.select().from(pipelineStages).all(),
+    deals: db
+      .select({ id: deals.id, value: deals.value, stageId: deals.stageId, createdAt: deals.createdAt })
+      .from(deals)
+      .all(),
+    contacts: db.select({ source: contacts.source, temperature: contacts.temperature }).from(contacts).all(),
+    activities: db
+      .select({ scheduledAt: activities.scheduledAt, completedAt: activities.completedAt })
+      .from(activities)
+      .all(),
+    now: new Date(),
   });
-
-  const wonDeals = allDeals.filter((d) => {
-    const stage = stages.find((s) => s.id === d.stageId);
-    return stage?.isWon;
-  });
-
-  const stats: DashboardStats = {
-    totalContacts: allContacts.length,
-    activeDeals: activeDeals.length,
-    totalPipelineValue: activeDeals.reduce((sum, d) => sum + d.value, 0),
-    wonDealsValue: wonDeals.reduce((sum, d) => sum + d.value, 0),
-    conversionRate:
-      allDeals.length > 0
-        ? Math.round((wonDeals.length / allDeals.length) * 100)
-        : 0,
-    hotLeads: allContacts.filter((c) => c.temperature === "hot").length,
-  };
-
-  const pipelineData = stages
-    .filter((s) => !s.isLost)
-    .map((stage) => ({
-      name: stage.name,
-      count: allDeals.filter((d) => d.stageId === stage.id).length,
-      value: allDeals
-        .filter((d) => d.stageId === stage.id)
-        .reduce((sum, d) => sum + d.value, 0),
-      color: stage.color,
-    }));
 
   const recentActivities = db
     .select({
@@ -65,42 +42,41 @@ export default function DashboardPage() {
     .limit(5)
     .all();
 
-  const isFirstRun = allContacts.length === 0 && allDeals.length === 0;
+  const isFirstRun = data.kpis.totalContacts === 0 && data.kpis.activeDeals === 0 && data.kpis.wonValue === 0;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Resumen de tu pipeline de ventas
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Resumen de tu pipeline de ventas · mes de referencia {data.referenceMonth}
+          </p>
+        </div>
+        <QuickActions />
       </div>
 
       {isFirstRun && (
         <div className="rounded-lg border border-primary/20 bg-primary/5 p-6">
-          <h2 className="text-lg font-semibold mb-2">
-            Bienvenido a Auto-CRM
-          </h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            Tu CRM esta listo. Aqui tienes como comenzar:
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-            <div className="p-3 rounded-lg bg-card border">
+          <h2 className="mb-2 text-lg font-semibold">Bienvenido a Auto-CRM</h2>
+          <p className="mb-4 text-sm text-muted-foreground">Tu CRM esta listo. Aqui tienes como comenzar:</p>
+          <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+            <div className="rounded-lg border bg-card p-3">
               <p className="font-medium">1. Personaliza tu CRM</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Ejecuta <code className="bg-muted px-1 rounded">/setup</code> en Claude Code
+              <p className="mt-1 text-xs text-muted-foreground">
+                Ejecuta <code className="rounded bg-muted px-1">/setup</code> en Claude Code
               </p>
             </div>
-            <div className="p-3 rounded-lg bg-card border">
+            <div className="rounded-lg border bg-card p-3">
               <p className="font-medium">2. Agrega contactos</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Ve a Contactos o usa <code className="bg-muted px-1 rounded">/add-lead</code>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Ve a Contactos o usa <code className="rounded bg-muted px-1">/add-lead</code>
               </p>
             </div>
-            <div className="p-3 rounded-lg bg-card border">
+            <div className="rounded-lg border bg-card p-3">
               <p className="font-medium">3. Carga datos demo</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Ejecuta <code className="bg-muted px-1 rounded">npm run seed</code> en terminal
+              <p className="mt-1 text-xs text-muted-foreground">
+                Ejecuta <code className="rounded bg-muted px-1">npm run seed</code> en terminal
               </p>
             </div>
           </div>
@@ -109,26 +85,33 @@ export default function DashboardPage() {
 
       <NotificationBanner />
 
-      <KPICards stats={stats} />
+      <KPICards kpis={data.kpis} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <PipelineChart data={pipelineData} />
+          <SalesTrendChart data={data.monthlySales} />
         </div>
-        <div>
-          <RecentActivity
-            activities={
-              recentActivities as Array<{
-                id: string;
-                type: string;
-                description: string;
-                contactName: string | null;
-                createdAt: number | Date;
-              }>
-            }
-          />
-        </div>
+        <InsightsPanel insights={data.insights} />
       </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <PipelineChart data={data.pipeline} />
+        </div>
+        <SourceMixChart data={data.sourceMix} />
+      </div>
+
+      <RecentActivity
+        activities={
+          recentActivities as Array<{
+            id: string;
+            type: string;
+            description: string;
+            contactName: string | null;
+            createdAt: number | Date;
+          }>
+        }
+      />
     </div>
   );
 }

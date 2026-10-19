@@ -23,8 +23,8 @@ export function Header() {
         </SheetContent>
       </Sheet>
 
-      <div className="flex-1 flex items-center gap-4">
-        <div className="relative w-full max-w-md">
+      <div className="flex-1 min-w-0 flex items-center gap-4">
+        <div className="relative w-full min-w-0 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar contactos, deals..."
