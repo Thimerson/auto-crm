@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { contacts, deals, activities } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { deleteContactCascade } from "@/lib/contact-delete";
 
 export async function GET(
   _request: NextRequest,
@@ -107,6 +108,13 @@ export async function DELETE(
     );
   }
 
-  db.delete(contacts).where(eq(contacts.id, id)).run();
+  const result = deleteContactCascade(db, id);
+  if (result === "has_deals") {
+    return NextResponse.json(
+      { error: "El contacto tiene deals. Elimina o reasigna sus deals primero" },
+      { status: 409 }
+    );
+  }
+
   return NextResponse.json({ success: true });
 }
